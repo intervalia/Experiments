@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Color Picker</title>
+    <style>
+      .colorMerge
+      {
+        display: inline-block;
+      }
+
+      .colorMerge,
+      .colorMerge input
+      {
+        font: 12px Tahoma;
+      }
+
+      .colorMerge h3
+      {
+        margin: 6px 0 0 0;
+        padding: 0;
+        text-align: center;
+      }
+
+      .colorMerge .color
+      {
+        border: 1px solid black;
+        height: 20px;
+        width: 200px;
+      }
+
+      .colorMerge .content,
+      .colorMerge .sliderHolder
+      {
+        border: 1px solid #999999;
+        border-collapse:collapse;
+        display: inline-block;
+        padding: 2px;
+      }
+
+      .colorMerge .sliderHolder
+      {
+        height: 422px;
+        left: 215px;
+        position:absolute;
+        top: 8px;
+        width: 21px;
+      }
+
+      .colorMerge .sliderHolder .sliderThumb
+      {
+        background-color: #A0A0A0;
+        border: 1px solid #808080;
+        height: 19px;
+        left: 2px;
+        margin: 0;
+        foverflow: hidden;
+        padding: 0;
+        position: absolute;
+        top: 2px;
+        width: 19px;
+      }
+
+      .colorMerge .sliderHolder .sliderThumb span {
+        left: 24px;
+        position: relative;
+      }
+
+      .colorMerge > div > div
+      {
+        padding: 10px 0;
+      }
+
+      .colorMerge div div
+      {
+        margin: 8px 0;
+        text-align: right;
+        width: 202px;
+      }
+    </style>
+    <script type="text/javascript" src="jquery-1.9.1.js"></script>
+    <script type="text/javascript">
+      var percent = .5, max = 400;
+      var $thumbEl, thumbPos, thumbDownY, movingThumb = false;
+      function newRgb() {
+        return {"r": 0, "g": 0, "b": 0};
+      }
+
+      function hexToRgb(hex) {
+        var temp, r,g,b,rgb = newRgb();
+        if(hex.length < 4) {
+          temp = hex.substr(0,1);
+          rgb.r = parseInt(temp+temp,16);
+          temp = hex.substr(1,1);
+          rgb.g = parseInt(temp+temp,16);
+          temp = hex.substr(2,1);
+          rgb.b = parseInt(temp+temp,16);
+        }
+        else {
+          rgb.r = parseInt(hex.substr(0,2),16);
+          rgb.g = parseInt(hex.substr(2,2),16);
+          rgb.b = parseInt(hex.substr(4,2),16);
+        }
+
+        if(isNaN(rgb.r)) {rgb.r = 0;}
+        if(isNaN(rgb.g)) {rgb.g = 0;}
+        if(isNaN(rgb.b)) {rgb.b = 0;}
+
+        return rgb;
+      }
+
+      function setRgbFromHex(pos) {
+        var rgbEl = $("#" + pos + "ColorRgb"),
+            hexEl = $("#" + pos + "ColorHex"),
+            rgb = hexToRgb(hexEl.val());
+
+            rgbEl.val(rgb.r+" "+rgb.g+" "+rgb.b);
+          }
+
+      function setColor(pos) {
+        var rgbEl = $("#" + pos + "ColorRgb"),
+            hexEl = $("#" + pos + "ColorHex"),
+            colorCell = $(".color." + pos),
+            cssColor = "#" + (hexEl.val() || "000");
+
+            colorCell.css("background-color", cssColor);
+      }
+
+      function getColor(pos) {
+        var hexEl = $("#" + pos + "ColorHex");
+        return hexToRgb(hexEl.val());
+      }
+
+      function updateMiddle() {
+        var rgbEl = $("#midColorRgb"),
+            hexEl = $("#midColorHex"),
+            rgb1 = getColor("top"),
+            rgb2 = getColor("bot"),
+            rgbMid = newRgb(),
+            r,g,b;
+
+        r = Math.round(rgb1.r - ((rgb1.r - rgb2.r) * percent));
+        g = Math.round(rgb1.g - ((rgb1.g - rgb2.g) * percent));
+        b = Math.round(rgb1.b - ((rgb1.b - rgb2.b) * percent));
+
+        hex = r.toString(16) + g.toString(16) + b.toString(16);
+        hexEl.val(hex);
+        setRgbFromHex("mid");
+        setColor("mid");
+      }
+
+      function updateThumb() {
+        var top = 2 + Math.round(max * percent);
+
+        thumbPos = Math.round(top);
+        $thumbEl.css("top", thumbPos+"px");
+      }
+
+      function thumbDown(evt) {
+        if(evt.which === 1) {
+          thumbDownY = thumbPos - evt.clientY;
+          movingThumb = true;
+          return false;
+        }
+      }
+
+      function thumbUp(evt) {
+        if(evt.which === 1) {
+          movingThumb = false;
+        }
+      }
+
+      function thumbMove(evt) {
+        if(movingThumb && evt.which === 1) {
+          var deltaY = thumbDownY - (thumbPos - evt.clientY),
+              tempMax = max + 2;
+
+          thumbPos += deltaY;
+          if(thumbPos < 2) {
+            thumbPos = 2;
+          }
+          else if(thumbPos > tempMax) {
+            thumbPos = tempMax;
+          }
+
+          percent = (thumbPos - 2) / max;
+          thumbDownY = thumbPos - evt.clientY;
+
+          $thumbEl.css("top", thumbPos+"px");
+          $thumbEl.find("span").text((percent*100).toFixed(2)+"%");
+          updateMiddle();
+          return false;
+        }
+      }
+
+      $(document).ready(function () {
+        $thumbEl = $(".sliderHolder .sliderThumb");
+        setRgbFromHex("top");
+        setRgbFromHex("bot");
+        setColor("top");
+        setColor("bot");
+        updateThumb();
+        updateMiddle();
+
+        $thumbEl.on("mousedown", thumbDown);
+        $(document).on({
+          "mousemove": thumbMove,
+          "mouseup": thumbUp
+        });
+
+        $("#topColorHex").on('keypress', function (evt) {
+          setRgbFromHex("top");
+          setColor("top");
+          updateMiddle();
+        }).on('keyup', function (evt) {
+          setRgbFromHex("top");
+          setColor("top");
+          updateMiddle();
+        });
+
+        $("#botColorHex").on('keypress', function (evt) {
+          setRgbFromHex("bot");
+          setColor("bot");
+          updateMiddle();
+        }).on('keyup', function (evt) {
+          setRgbFromHex("bot");
+          setColor("bot");
+          updateMiddle();
+        });
+      });
+    </script>
+</head>
+<body>
+  <div class="colorMerge">
+    <div class="content">
+      <h3>Color Picker</h3>
+      <div>
+        <div class="color top"></div>
+        <div>
+          <label>HTML
+            <input data-section="top" id="topColorHex" value="FFFFFF">
+          </label>
+        </div>
+        <div>
+          <label>RGB
+            <input data-section="top" id="topColorRgb" value="">
+          </label>
+        </div>
+      </div>
+      <div>
+        <div class="color mid"></div>
+        <div>
+          <label>HTML
+            <input data-section="mid" id="midColorHex" value="">
+          </label>
+        </div>
+        <div>
+          <label>RGB
+            <input data-section="mid" id="midColorRgb" value="">
+          </label>
+        </div>
+      </div>
+      <div>
+        <div class="color bot"></div>
+        <div>
+          <label>HTML
+            <input data-section="bot" id="botColorHex" value="224466">
+          </label>
+        </div>
+        <div>
+          <label>RGB
+            <input data-section="bot" id="botColorRgb" value="">
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="sliderHolder">
+      <div class="sliderThumb">
+        <span></span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

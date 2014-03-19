@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="../../jquery-1.9.1.js"></script>
+  <style>
+  body {
+    background-color: #000000;
+  }
+  .container {
+    border: 1px solid #FFFFFF;
+    bottom: 180px;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    right: 180px;
+  }
+
+  .container.moved {
+    bottom: auto;
+    right: auto;
+  }
+
+  .container .sub {
+    background-color: #002200;
+    border: 1px solid #114411;
+    border-radius: 8px;
+    color: #FFFFFF;
+    cursor: move;
+    margin: 0;
+    padding: 10px;
+    position: absolute;
+  }
+
+  .container ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .container li {
+    white-space: nowrap;
+  }
+
+  .container .sub .extra {
+    display: none;
+  }
+
+  .container .sub:hover .extra {
+    display: inline;
+  }
+  </style>
+  <script>
+  var selected = false;
+  var offset;
+
+  function mouseDownEH(evt) {
+    if(evt.button === 0) {
+      selected = true;
+      var $el = $(evt.currentTarget);
+      offset = {
+        "x": evt.pageX - $el.offset().left,
+        "y": evt.pageY - $el.offset().top
+      };
+      $(document).on({
+        'mouseup': mouseUpEH,
+        'mousemove': mouseMoveEH
+      });
+    }
+  }
+  function mouseUpEH(evt) {
+    if(evt.button === 0) {
+      selected = false;
+      $(document).off({
+        'mouseup': mouseUpEH,
+        'mousemove': mouseMoveEH
+      });
+    }
+  }
+  function mouseMoveEH(evt) {
+    if(selected) {
+      var top = evt.pageY - offset.y;
+      var left = evt.pageX - offset.x;
+      var css = {
+        "top": top,
+        "left": left
+      };
+      $(".container").addClass("moved").css(css);
+      return false;
+    }
+  }
+  function init() {
+    $(".container").on('mousedown', mouseDownEH);
+  }
+  $(document).ready(init);
+  </script>
+</head>
+<body>
+  <div class="container">
+    <div class="sub">
+      <ul>
+        <li>[A] <span class="extra">Blah blah blah</span></li>
+        <li>[B] <span class="extra">Blah blah blah</span></li>
+        <li>[C] <span class="extra">Blah blah blah</span></li>
+        <li>[D] <span class="extra">Blah blah blah</span></li>
+        <li>[E] <span class="extra">Blah blah blah</span></li>
+        <li>[F] <span class="extra">Blah blah blah</span></li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>
